@@ -2179,6 +2179,8 @@ name = "wb_api"
 version = "0.1.0"
 dependencies = [
  "polars",
+ "serde",
+ "serde_json",
  "tokio",
  "warp",
 ]
