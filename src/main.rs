@@ -5,7 +5,7 @@ use polars::prelude::*;
 // Define a function to read the header of the CSV file and return it as JSON
 async fn read_csv_header() -> Result<impl warp::Reply, Infallible> {
     // Read the CSV file and create a DataFrame
-    let df = CsvReader::from_path("/home/amine/Documents/internship/projects/wb_api/src/titanic.csv")
+    let df = CsvReader::from_path("./src/titanic.csv")
         .unwrap() //attempts to open and read the CSV file
         .has_header(true) //specify that the CSV file has a header row. This means that the first row of the CSV file contains column names, and the reader should interpret it as such
         .finish() //this method returns a Result containing either a DataFrame if successful or an error message if the CSV file cannot be parsed
@@ -24,7 +24,7 @@ async fn read_csv_header() -> Result<impl warp::Reply, Infallible> {
 // Define a function to read a row of the CSV file based on the given row_index and return it as JSON
 async fn read_csv_row(row_index: usize) -> Result<impl warp::Reply, Infallible> {
     // Read the CSV file and create a DataFrame
-    let df = CsvReader::from_path("/home/amine/Documents/internship/projects/wb_api/src/titanic.csv")
+    let df = CsvReader::from_path("./src/titanic.csv")
         .unwrap() 
         .has_header(true)
         .finish()
@@ -68,7 +68,7 @@ fn type_of<T>(_: T) -> String {
 async fn main() {
 
 
-    let df = CsvReader::from_path("/home/amine/Documents/internship/projects/wb_api/src/titanic.csv")
+    let df = CsvReader::from_path("./src/titanic.csv")
         .unwrap() 
         .has_header(true)
         .finish()
