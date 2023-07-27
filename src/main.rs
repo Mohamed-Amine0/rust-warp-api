@@ -25,26 +25,38 @@ async fn read_csv_header() -> Result<impl warp::Reply, Infallible> {
 async fn read_csv_row(row_index: usize) -> Result<impl warp::Reply, Infallible> {
     // Read the CSV file and create a DataFrame
     let df = CsvReader::from_path("./src/titanic.csv")
-        .unwrap() 
+        .unwrap()
         .has_header(true)
         .finish()
         .unwrap();
 
     // Check if the row_index is within the valid range of rows in the DataFrame
     if row_index < df.height() {
-        // Get the data from the specified row and convert it to a Vec of Strings
-        let row_data = df
-            .get_row(row_index) //get the row at the specified index
-            .unwrap() //unwrap the Result to get the Row
-            .0.iter() //iterate over the values in the Row
-            .map(|value| value.to_string()) //convert each value to a String
-            .collect::<Vec<String>>();
+        // Get the data from the specified row
+        let row_data = df.get_row(row_index).unwrap();
 
-        // Serialize the row_data into a JSON response
-        let serialized_response = serde_json::to_string(&row_data).unwrap();
+        // Convert each value to a String and handle null values
+        let row_data_strings = row_data
+            .0
+            .iter()
+            .map(|value| {
+                if value.is_nested_null() {
+                    "".to_string() // Replace null with an empty string
+                } else {
+                    // Check if the value is a string with double quotes and remove them
+                    let val_str = value.to_string();
+                    if val_str.starts_with('"') && val_str.ends_with('"') {
+                        val_str[1..val_str.len() - 1].to_string()
+                    } else {
+                        val_str
+                    }
+                }
+            })
+            .collect::<Vec<String>>();
+        
 
         // Return the JSON response
-        Ok(warp::reply::json(&serialized_response))
+        Ok(warp::reply::json(&row_data_strings))
     } else {
         // If the row_index is invalid, create an error message
         let error_response = format!("Row with index: {} not found", row_index);
@@ -56,6 +68,7 @@ async fn read_csv_row(row_index: usize) -> Result<impl warp::Reply, Infallible> 
         Ok(warp::reply::json(&serialized_response))
     }
 }
+
 
 // Define a function to get the type of a variable
 fn type_of<T>(_: T) -> String {
