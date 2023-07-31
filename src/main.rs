@@ -1,30 +1,31 @@
-use std::convert::Infallible;
-use warp::Filter;
 use polars::prelude::*;
+use std::{collections::HashMap, convert::Infallible};
+use warp::Filter;
 
 // Define a function to read the header of the CSV file and return it as JSON
-async fn read_csv_header() -> Result<impl warp::Reply, Infallible> {
+async fn read_csv_header(file_path: String) -> Result<impl warp::Reply, Infallible> {
     // Read the CSV file and create a DataFrame
-    let df = CsvReader::from_path("./src/titanic.csv")
+    let df = CsvReader::from_path(&file_path)
         .unwrap() //attempts to open and read the CSV file
         .has_header(true) //specify that the CSV file has a header row. This means that the first row of the CSV file contains column names, and the reader should interpret it as such
         .finish() //this method returns a Result containing either a DataFrame if successful or an error message if the CSV file cannot be parsed
         .unwrap(); //unwrap the Result to get the DataFrame
 
     // Extract the header names from DataFrame columns and collect them into a Vec of Strings
-    let header: Vec<String> = df.get_columns() //get the columns of the DataFrame
-                                .iter() //iterate over the columns
-                                .map(|c| c.name().to_string()) //get the name of each column and convert it to a String
-                                .collect(); //collect the Strings into a Vec
+    let header: Vec<String> = df
+        .get_column_names()
+        .iter()
+        .map(|name| name.to_string())
+        .collect();
 
     // Return the header as a JSON response
     Ok(warp::reply::json(&header))
 }
 
 // Define a function to read a row of the CSV file based on the given row_index and return it as JSON
-async fn read_csv_row(row_index: usize) -> Result<impl warp::Reply, Infallible> {
+async fn read_csv_row(file_path: String, row_index: usize) -> Result<impl warp::Reply, Infallible> {
     // Read the CSV file and create a DataFrame
-    let df = CsvReader::from_path("./src/titanic.csv")
+    let df = CsvReader::from_path(&file_path)
         .unwrap()
         .has_header(true)
         .finish()
@@ -53,7 +54,6 @@ async fn read_csv_row(row_index: usize) -> Result<impl warp::Reply, Infallible> 
                 }
             })
             .collect::<Vec<String>>();
-        
 
         // Return the JSON response
         Ok(warp::reply::json(&row_data_strings))
@@ -69,97 +69,31 @@ async fn read_csv_row(row_index: usize) -> Result<impl warp::Reply, Infallible> 
     }
 }
 
-
-// Define a function to get the type of a variable
-fn type_of<T>(_: T) -> String {
-    std::any::type_name::<T>().to_string()
-}
-
-
-
 #[tokio::main]
 async fn main() {
-
-
-    let df = CsvReader::from_path("./src/titanic.csv")
-        .unwrap() 
-        .has_header(true)
-        .finish()
-        .unwrap();
-
-        // Get the data from the specified row and convert it to a Vec of Strings
-        let row_data = df
-            .get_row(3) //get the row at the specified index
-            .unwrap() //unwrap the Result to get the Row
-            .0.iter() //iterate over the values in the Row
-            .map(|value| value.to_string()) //convert each value to a String
-            .collect::<Vec<String>>();
-
-    // Print the result of the df.get_row(3).unwrap() method call
-    println!("\n\n\n\n\n\nTHIS IS THE RESULT OF df.get_row(3).unwrap() METHOD CALL:\n");
-    println!("{:?}", df.get_row(3).unwrap());  
-    // Print the type of the df.get_row(3).unwrap() method call
-    println!("\n\nTHIS IS THE TYPE OF df.get_row(3).unwrap() METHOD CALL:\n");
-    println!("{:?}", type_of(df.get_row(3).unwrap()));
-
-    // Print the result of the df.get_row(3).unwrap().0 method call
-    println!("\n\n\n\n\n\nTHIS IS THE RESULT OF df.get_row(3).unwrap().0 METHOD CALL:\n");
-    println!("{:?}", df.get_row(3).unwrap().0);
-    // Print the type of the df.get_row(3).unwrap().0 method call
-    println!("\n\nTHIS IS THE TYPE OF df.get_row(3).unwrap().0 METHOD CALL:\n");
-    println!("{:?}", type_of(df.get_row(3).unwrap().0));
-
-    // Print the result of the df.get_rows(3).unwrap().0.iter() method call
-    println!("\n\n\n\n\n\nTHIS IS THE RESULT OF df.get_rows(3).unwrap().0.iter() METHOD CALL:\n");
-    println!("{:?}", df.get_row(3).unwrap().0.iter());
-    // Print the type of the df.get_rows(3).unwrap().0.iter() method call
-    println!("\n\nTHIS IS THE TYPE OF df.get_rows(3).unwrap().0.iter() METHOD CALL:\n");
-    println!("{:?}", type_of(df.get_row(3).unwrap().0.iter()));
-
-    // Print row_data
-    println!("\n\n\n\n\n\nTHIS IS THE ROW DATA:\n");
-    println!("{:?}", row_data);
-    // Print the type of row_data
-    println!("\n\nTHIS IS THE TYPE OF ROW DATA:\n");
-    println!("{:?}", type_of(row_data));
-
-    // Print the df
-    println!("\n\n\n\n\n\nTHIS IS THE DATAFRAME:\n");
-    println!("{:?}", df);
-    // Print the type of the df
-    println!("\n\nTHIS IS THE TYPE OF DATAFRAME:\n");
-    println!("{:?}", type_of(df));
-
-    
-
-
-    // Print the result of the df.get_columns() method call
-    //println!("\n\n\n\n\n\nTHIS IS THE RESULT OF df.get_columns() METHOD CALL:\n\n");
-    //println!("{:?}", df.get_columns());
-
-
-    
     // Define routes for the health check
-    let health_route = warp::path("health")
-        .and(warp::get())
-        .map(|| "OK");
-    
+    let health_route = warp::path("health").and(warp::get()).map(|| "OK");
 
     // Define routes for the API
-    let api_route_header = warp::path!("api" /"header")
+    let api_route_header = warp::path!("api" / "header")
         .and(warp::get())
-        .and_then(read_csv_header);
+        .and(warp::query::<HashMap<String, String>>())
+        .and_then(|params: HashMap<String, String>| {
+            let file_path = params.get("file_path").cloned().unwrap_or_default();
+            read_csv_header(file_path)
+        });
 
     let api_route_row = warp::path!("api" / "row" / usize)
         .and(warp::get())
-        .and_then(read_csv_row);
+        .and(warp::query::<HashMap<String, String>>())
+        .and_then(|row_index: usize, params: HashMap<String, String>| {
+            let file_path = params.get("file_path").cloned().unwrap_or_default();
+            read_csv_row(file_path, row_index)
+        });
 
     // Combine the routes
-    let routes = health_route
-        .or(api_route_header)
-        .or(api_route_row);
+    let routes = health_route.or(api_route_header).or(api_route_row);
 
-        
     // Start the web server and run it on localhost:3030
     warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
 }
