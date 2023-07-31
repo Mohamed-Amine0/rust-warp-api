@@ -1,6 +1,6 @@
+use polars::prelude::*;
 use std::{collections::HashMap, convert::Infallible};
 use warp::Filter;
-use polars::prelude::*;
 
 // Define a function to read the header of the CSV file and return it as JSON
 async fn read_csv_header(file_path: String) -> Result<impl warp::Reply, Infallible> {
