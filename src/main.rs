@@ -53,7 +53,7 @@ async fn main() {
     let health_route = warp::path("health").and(warp::get()).map(|| "OK");
 
     // Define routes for the API
-    let api_route_header = warp::path!("api" / "header")
+    let api_route_header = warp::path!("header")
         .and(warp::get())
         .and(warp::query::<HashMap<String, String>>())
         .and_then(|params: HashMap<String, String>| {
@@ -61,7 +61,7 @@ async fn main() {
             read_csv_header(file_path)
         });
 
-    let api_route_row = warp::path!("api" / "row" / usize)
+    let api_route_row = warp::path!("row" / usize)
         .and(warp::get())
         .and(warp::query::<HashMap<String, String>>())
         .and_then(|row_index: usize, params: HashMap<String, String>| {
