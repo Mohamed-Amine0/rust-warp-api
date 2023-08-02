@@ -22,18 +22,30 @@ The API will be available on localhost:3030.
 To get the header of the CSV file, you can use the following request or just use your browser:
 
 ```
-curl -X GET http://localhost:3030/api/header
+curl -X GET http://localhost:3030/header?file_path=./src/titanic.csv
 ```
 
 This will return a JSON response like the following:
 
- ["PassengerId", "Survived", "Pclass", "Name", "Sex", "Age", "SibSp", "Parch", "Ticket", "Fare", "Cabin", "Embarked"]
-
+```
+0	"PassengerId"
+1	"Survived"
+2	"Pclass"
+3	"Name"
+4	"Sex"
+5	"Age"
+6	"SibSp"
+7	"Parch"
+8	"Ticket"
+9	"Fare"
+10	"Cabin"
+11	"Embarked"
+```
 
 To get the row with the index 3, you can use the following request or just use your browser:
 
 ```
-curl -X GET http://localhost:3030/api/row/6
+curl -X GET http://localhost:3030/row/132?file_path=./src/titanic.csv
 ```
 
 This will return a response like the following:
