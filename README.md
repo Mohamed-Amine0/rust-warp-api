@@ -1,42 +1,49 @@
-# RUST_API
-## README
+# Rust CSV API
 
-This code provides a simple API for reading and parsing CSV files. The API is implemented using the Warp framework and the Polars library.
+This is a simple Rust application that provides a web API for interacting with a CSV file. The API allows you to read the header, read specific rows, delete columns, and add new columns to the CSV file.
 
-The API has two routes:
+## Requirements
 
-* `/health`: This route returns a simple "OK" message to indicate that the API is healthy.
-* `/api/header`: This route returns the header of the CSV file as JSON.
-* `/api/row/<row_index>`: This route returns the row with the specified index as JSON.
+- Rust (stable) - The application is written in Rust, so you need to have Rust installed on your system. 
+## Installation and Setup
 
-To run the API, simply run the following command:
+1. Clone the repository to your local machine
+2. you can build the application using "cargo build" and run it using "cargo r -r"
 
-```
-cargo run
-```
+## API Endpoints
+The following API endpoints are available:
 
-The API will be available on localhost:3030.
+# 1.Health Check
 
-## Example
+Endpoint: /health
+Method: GET
+Description: Returns "OK" as a response for health checks. You can use this endpoint to check if the server is running.
 
-To get the header of the CSV file, you can use the following request or just use your browser:
+# 2.Read CSV Header
 
-```
-curl -X GET http://localhost:3030/api/header
-```
+Endpoint: /header
+Method: GET
+Description: Returns the column names of the CSV file as a JSON array.
 
-This will return a JSON response like the following:
+# 3.Read CSV Row
 
- ["PassengerId", "Survived", "Pclass", "Name", "Sex", "Age", "SibSp", "Parch", "Ticket", "Fare", "Cabin", "Embarked"]
+Endpoint: /row/{row_index}
+Method: GET
+Description: Returns the data of the specified row in the CSV file as a JSON array. The row_index parameter should be an integer representing the row index (zero-based).
+
+# 4.Delete CSV Column
+
+Endpoint: /delete/column/{column_name}
+Method: DELETE
+Description: Deletes the specified column from the CSV file. The column_name parameter should be a string representing the column name.
+
+# 5.Add CSV Column
+
+Endpoint: /add/column/{column_name}
+Method: POST
+Description: Adds a new column to the CSV file. The column_name parameter should be a string representing the new column's name. The column data should be provided in the request body as a JSON array of strings.
+
+Assuming the application is running on localhost:3030, you can use tools like curl or a web client like Postman to interact with the API.
 
 
-To get the row with the index 3, you can use the following request or just use your browser:
 
-```
-curl -X GET http://localhost:3030/api/row/6
-```
-
-This will return a response like the following:
-
-
-["7","0","1","McCarthy, Mr. Timothy J","male","54.0","0","0","17463","51.8625","E46","S"]
