@@ -1,6 +1,7 @@
 use polars::prelude::*;
 use std::{collections::HashMap, convert::Infallible};
 use warp::Filter;
+use std::iter::zip;
 
 // Define a function to read the header of the CSV file and return it as JSON
 async fn read_csv_header(file_path: String) -> Result<impl warp::Reply, Infallible> {
@@ -27,38 +28,22 @@ async fn read_csv_row(file_path: String, row_index: usize) -> Result<impl warp::
     // Check if the row_index is within the valid range of rows in the DataFrame
     if row_index < df.height() {
         // Get the data from the specified row
-        let row_data = df.get_row(row_index).unwrap();
+        let row_data = df.get_row(row_index).unwrap().0;
 
-        // Convert each value to a String and handle null values
-        let row_data_strings = row_data
-            .0
-            .iter()
-            .map(|value| {
-                if value.is_nested_null() {
-                    "".to_string() // Replace null with an empty string
-                } else {
-                    // Check if the value is a string with double quotes and remove them
-                    let val_str = value.to_string();
-                    if val_str.starts_with('"') && val_str.ends_with('"') {
-                        val_str[1..val_str.len() - 1].to_string()
-                    } else {
-                        val_str
-                    }
-                }
-            })
-            .collect::<Vec<String>>();
+        // Create a new vector to store the name-value
+        let mut name_val = Vec::new();
+        for (name, value) in zip(df.get_column_names().iter(), row_data.iter()) {
+            name_val.push(format!("{}: {}", name, value));
+        }
 
         // Return the JSON response
-        Ok(warp::reply::json(&row_data_strings))
+        Ok(warp::reply::json(&name_val))
     } else {
         // If the row_index is invalid, create an error message
         let error_response = format!("Row with index: {} not found", row_index);
 
-        // Serialize the error_response into a JSON response
-        let serialized_response = serde_json::to_string(&error_response).unwrap();
-
         // Return the JSON response
-        Ok(warp::reply::json(&serialized_response))
+        Ok(warp::reply::json(&error_response))
     }
 }
 
