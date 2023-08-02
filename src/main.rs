@@ -1,99 +1,168 @@
 use polars::prelude::*;
-use std::{collections::HashMap, convert::Infallible};
+use std::convert::Infallible;
 use warp::Filter;
 
-// Define a function to read the header of the CSV file and return it as JSON
-async fn read_csv_header(file_path: String) -> Result<impl warp::Reply, Infallible> {
+// Function to read the header of a CSV file and return it as JSON
+async fn read_csv_header() -> Result<impl warp::Reply, Infallible> {
     // Read the CSV file and create a DataFrame
-    let df = CsvReader::from_path(&file_path)
-        .unwrap() //attempts to open and read the CSV file
-        .has_header(true) //specify that the CSV file has a header row. This means that the first row of the CSV file contains column names, and the reader should interpret it as such
-        .finish() //this method returns a Result containing either a DataFrame if successful or an error message if the CSV file cannot be parsed
-        .unwrap(); //unwrap the Result to get the DataFrame
-
-    // Extract the header names from DataFrame columns and collect them into a Vec of Strings
-    let header: Vec<String> = df
-        .get_column_names()
-        .iter()
-        .map(|name| name.to_string())
-        .collect();
-
-    // Return the header as a JSON response
-    Ok(warp::reply::json(&header))
-}
-
-// Define a function to read a row of the CSV file based on the given row_index and return it as JSON
-async fn read_csv_row(file_path: String, row_index: usize) -> Result<impl warp::Reply, Infallible> {
-    // Read the CSV file and create a DataFrame
-    let df = CsvReader::from_path(&file_path)
+    let df = CsvReader::from_path("./src/titanic.csv")
         .unwrap()
         .has_header(true)
         .finish()
         .unwrap();
 
-    // Check if the row_index is within the valid range of rows in the DataFrame
-    if row_index < df.height() {
-        // Get the data from the specified row
-        let row_data = df.get_row(row_index).unwrap();
+    // Extract the column names from the DataFrame and convert them to Strings
+    let header: Vec<String> = df
+        .get_columns()
+        .iter()
+        .map(|c| c.name().to_string())
+        .collect();
 
-        // Convert each value to a String and handle null values
-        let row_data_strings = row_data
+    // Respond with the column names as JSON
+    Ok(warp::reply::json(&header))
+}
+
+// Function to read a specific row from a CSV file and return it as JSON
+async fn read_csv_row(row_index: usize) -> Result<impl warp::Reply, Infallible> {
+    // Read the CSV file and create a DataFrame
+    let df = CsvReader::from_path("./src/titanic.csv")
+        .unwrap()
+        .has_header(true)
+        .finish()
+        .unwrap();
+
+    if row_index < df.height() {
+        // If the requested row index exists, extract the row data and convert it to Strings
+        let row_data = df
+            .get_row(row_index)
+            .unwrap()
             .0
             .iter()
-            .map(|value| {
-                if value.is_nested_null() {
-                    "".to_string() // Replace null with an empty string
-                } else {
-                    // Check if the value is a string with double quotes and remove them
-                    let val_str = value.to_string();
-                    if val_str.starts_with('"') && val_str.ends_with('"') {
-                        val_str[1..val_str.len() - 1].to_string()
-                    } else {
-                        val_str
-                    }
-                }
-            })
+            .map(|value| value.to_string())
             .collect::<Vec<String>>();
 
-        // Return the JSON response
-        Ok(warp::reply::json(&row_data_strings))
+        // Serialize the row data and respond with it as JSON
+        let serialized_response = serde_json::to_string(&row_data).unwrap();
+        Ok(warp::reply::json(&serialized_response))
     } else {
-        // If the row_index is invalid, create an error message
+        // If the requested row index does not exist, respond with an error message as JSON
         let error_response = format!("Row with index: {} not found", row_index);
-
-        // Serialize the error_response into a JSON response
         let serialized_response = serde_json::to_string(&error_response).unwrap();
-
-        // Return the JSON response
         Ok(warp::reply::json(&serialized_response))
     }
 }
 
+// Function to delete a column from a CSV file and return a status message as JSON
+async fn delete_csv_column(column_name: String) -> Result<impl warp::Reply, Infallible> {
+    // Read the CSV file and create a DataFrame
+    let mut df = CsvReader::from_path("./src/titanic.csv")
+        .unwrap()
+        .has_header(true)
+        .finish()
+        .unwrap();
+
+    // Get the names of existing columns in the DataFrame
+    let column_names: Vec<&str> = df.get_column_names().into_iter().map(|s| s).collect();
+
+    if column_names.contains(&column_name.as_str()) {
+        // If the column name exists in the DataFrame, drop the column and save the updated DataFrame
+        let _ = df.drop_in_place(&column_name).unwrap();
+        let mut file = std::fs::File::create("./src/titanic.csv").unwrap();
+        CsvWriter::new(&mut file).finish(&mut df).unwrap();
+        Ok(warp::reply::json(&format!(
+            "Column '{}' deleted successfully",
+            column_name
+        )))
+    } else {
+        // If the column name does not exist in the DataFrame, respond with an error message as JSON
+        Ok(warp::reply::json(&format!(
+            "Column '{}' not found",
+            column_name
+        )))
+    }
+}
+
+// Function to add a new column to a CSV file and return a status message as JSON
+async fn add_csv_column(
+    column_name: String,
+    column_data: Vec<String>,
+) -> Result<impl warp::Reply, Infallible> {
+    // Read the CSV file and create a DataFrame
+    let mut df = CsvReader::from_path("./src/titanic.csv")
+        .unwrap()
+        .has_header(true)
+        .finish()
+        .unwrap();
+
+    // Get the length of the provided column data and the number of rows in the DataFrame
+    let data_column_length = column_data.len();
+    let df_height = df.height();
+
+    if data_column_length < df_height {
+        // If the provided column data is shorter than the DataFrame, pad it with null values for the missing rows
+        let num_missing_rows = df_height - data_column_length;
+        let mut padded_data = column_data;
+        padded_data.extend((0..num_missing_rows).map(|_| String::new()));
+
+        // Create a new column with the padded data and add it to the DataFrame
+        let data_column = Series::new(&column_name, padded_data);
+        df.with_column(data_column).unwrap();
+    } else if data_column_length == df_height {
+        // If the provided column data has the same length as the DataFrame, create a new column with the data
+        let data_column = Series::new(&column_name, column_data);
+        df.with_column(data_column).unwrap();
+    } else {
+        // If the provided column data is longer than the DataFrame, respond with an error message as JSON
+        return Ok(warp::reply::json(&format!(
+            "Data column '{}' has more data than the existing DataFrame",
+            column_name
+        )));
+    }
+
+    // Write the updated DataFrame to the CSV file
+    let mut file = std::fs::File::create("./src/titanic.csv").unwrap();
+    CsvWriter::new(&mut file).finish(&mut df).unwrap();
+
+    // Respond with a success message as JSON
+    Ok(warp::reply::json(&format!(
+        "Column '{}' added successfully",
+        column_name
+    )))
+}
+
 #[tokio::main]
 async fn main() {
-    // Define routes for the health check
+    // Define the health route that returns "OK" for health checks
     let health_route = warp::path("health").and(warp::get()).map(|| "OK");
 
-    // Define routes for the API
-    let api_route_header = warp::path!("api" / "header")
+    // Define the route to read the header of the CSV file
+    let api_route_header = warp::path!("header")
         .and(warp::get())
-        .and(warp::query::<HashMap<String, String>>())
-        .and_then(|params: HashMap<String, String>| {
-            let file_path = params.get("file_path").cloned().unwrap_or_default();
-            read_csv_header(file_path)
-        });
+        .and_then(read_csv_header);
 
-    let api_route_row = warp::path!("api" / "row" / usize)
+    // Define the route to read a specific row from the CSV file
+    let api_route_row = warp::path!("row" / usize)
         .and(warp::get())
-        .and(warp::query::<HashMap<String, String>>())
-        .and_then(|row_index: usize, params: HashMap<String, String>| {
-            let file_path = params.get("file_path").cloned().unwrap_or_default();
-            read_csv_row(file_path, row_index)
-        });
+        .and_then(read_csv_row);
 
-    // Combine the routes
-    let routes = health_route.or(api_route_header).or(api_route_row);
+    // Define the route to delete a column from the CSV file
+    let api_route_delete_column = warp::path!("delete" / "column" / String)
+        .and(warp::delete())
+        .and_then(delete_csv_column);
 
-    // Start the web server and run it on localhost:3030
+    // Define the route to add a new column to the CSV file
+    let api_route_add_column = warp::path!("add" / "column" / String)
+        .and(warp::post())
+        .and(warp::body::json())
+        .and_then(add_csv_column);
+
+    // Combine all the defined routes
+    let routes = health_route
+        .or(api_route_header)
+        .or(api_route_row)
+        .or(api_route_delete_column)
+        .or(api_route_add_column);
+
+    // Start the server and listen on localhost:3030
     warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
 }
