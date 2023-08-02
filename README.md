@@ -1,4 +1,4 @@
-# RUST_API
+# rust_api
 ## README
 
 This code provides a simple API for reading and parsing CSV files. The API is implemented using the Warp framework and the Polars library.
