@@ -6,8 +6,8 @@ This code provides a simple API for reading and parsing CSV files. The API is im
 The API has two routes:
 
 * `/health`: This route returns a simple "OK" message to indicate that the API is healthy.
-* `/api/header`: This route returns the header of the CSV file as JSON.
-* `/api/row/<row_index>`: This route returns the row with the specified index as JSON.
+* `/header`: This route returns the header of the CSV file as JSON.
+* `/row/<row_index>?file_path=<full path of your csv file>`: This route returns the row with the specified index as JSON.
 
 To run the API, simply run the following command:
 
