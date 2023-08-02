@@ -11,15 +11,8 @@ async fn read_csv_header(file_path: String) -> Result<impl warp::Reply, Infallib
         .finish() //this method returns a Result containing either a DataFrame if successful or an error message if the CSV file cannot be parsed
         .unwrap(); //unwrap the Result to get the DataFrame
 
-    // Extract the header names from DataFrame columns and collect them into a Vec of Strings
-    let header: Vec<String> = df
-        .get_column_names()
-        .iter()
-        .map(|name| name.to_string())
-        .collect();
-
     // Return the header as a JSON response
-    Ok(warp::reply::json(&header))
+    Ok(warp::reply::json(&df.get_column_names()))
 }
 
 // Define a function to read a row of the CSV file based on the given row_index and return it as JSON
