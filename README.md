@@ -38,5 +38,17 @@ curl -X GET http://localhost:3030/api/row/6
 
 This will return a response like the following:
 
-
-["7","0","1","McCarthy, Mr. Timothy J","male","54.0","0","0","17463","51.8625","E46","S"]
+```
+0	"PassengerId: 133"
+1	"Survived: 0"
+2	"Pclass: 3"
+3	'Name: "Robins, Mrs. Alexander A (Grace Charity Laury)"'
+4	'Sex: "female"'
+5	"Age: 47.0"
+6	"SibSp: 1"
+7	"Parch: 0"
+8	'Ticket: "A/5. 3337"'
+9	"Fare: 14.5"
+10	"Cabin: null"
+11	'Embarked: "S"'
+```
