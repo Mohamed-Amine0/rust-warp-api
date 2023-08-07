@@ -1,4 +1,5 @@
 use polars::prelude::*;
+use serde_json::Value;
 use std::convert::Infallible;
 use warp::Filter;
 
@@ -83,10 +84,13 @@ async fn delete_csv_column(column_name: String) -> Result<impl warp::Reply, Infa
 }
 
 // Function to add a new column to a CSV file and return a status message as JSON
-async fn add_csv_column(
+async fn add_csv_column<T: ToString + Send + Sync + 'static>(
     column_name: String,
-    column_data: Vec<String>,
+    column_data: Vec<T>,
 ) -> Result<impl warp::Reply, Infallible> {
+    // Convert column_data to Vec<String>
+    let column_data_strings: Vec<String> = column_data.iter().map(|val| val.to_string()).collect();
+
     // Read the CSV file and create a DataFrame
     let mut df = CsvReader::from_path("./src/titanic.csv")
         .unwrap()
@@ -95,13 +99,13 @@ async fn add_csv_column(
         .unwrap();
 
     // Get the length of the provided column data and the number of rows in the DataFrame
-    let data_column_length = column_data.len();
+    let data_column_length = column_data_strings.len();
     let df_height = df.height();
 
     if data_column_length < df_height {
         // If the provided column data is shorter than the DataFrame, pad it with null values for the missing rows
         let num_missing_rows = df_height - data_column_length;
-        let mut padded_data = column_data;
+        let mut padded_data = column_data_strings;
         padded_data.extend((0..num_missing_rows).map(|_| String::new()));
 
         // Create a new column with the padded data and add it to the DataFrame
@@ -109,7 +113,7 @@ async fn add_csv_column(
         df.with_column(data_column).unwrap();
     } else if data_column_length == df_height {
         // If the provided column data has the same length as the DataFrame, create a new column with the data
-        let data_column = Series::new(&column_name, column_data);
+        let data_column = Series::new(&column_name, column_data_strings);
         df.with_column(data_column).unwrap();
     } else {
         // If the provided column data is longer than the DataFrame, respond with an error message as JSON
@@ -132,6 +136,16 @@ async fn add_csv_column(
 
 #[tokio::main]
 async fn main() {
+    // Read the CSV file and create a DataFrame
+    let df = CsvReader::from_path("./src/titanic.csv")
+        .unwrap()
+        .has_header(true)
+        .finish()
+        .unwrap();
+
+    // Print the DataFrame to the console
+    println!("DataFrame df from titanic.csv:");
+    println!("{:?}", df);
     // Define the health route that returns "OK" for health checks
     let health_route = warp::path("health").and(warp::get()).map(|| "OK");
 
@@ -154,7 +168,7 @@ async fn main() {
     let api_route_add_column = warp::path!("add" / "column" / String)
         .and(warp::post())
         .and(warp::body::json())
-        .and_then(add_csv_column);
+        .and_then(add_csv_column::<Value>);
 
     // Combine all the defined routes
     let routes = health_route
