@@ -8,7 +8,8 @@ This is a simple Rust application that provides a web API for interacting with a
 ## Installation and Setup
 
 1. Clone the repository to your local machine
-2. you can build the application using "cargo build" and run it using "cargo r -r"
+2. you can build the application using "cargo build" and run it using "cargo RUN <CSV_PATH>"
+ P.S: CSV_PATH is the path to a csv that needs to be included as an argumnt ( you can use the titanic csv located in ./src/titanic.csv )
 
 ## API Endpoints
 The following API endpoints are available:
