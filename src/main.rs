@@ -1,3 +1,4 @@
+use core::iter::zip;
 use lazy_static::lazy_static;
 use polars::prelude::*;
 use serde_json::Value;
@@ -14,15 +15,7 @@ async fn read_csv_header(csv_path: String) -> Result<impl warp::Reply, Infallibl
         .finish()
         .unwrap();
 
-    // Extract the column names from the DataFrame and convert them to Strings
-    let header: Vec<String> = df
-        .get_columns()
-        .iter()
-        .map(|c| c.name().to_string())
-        .collect();
-
-    // Respond with the column names as JSON
-    Ok(warp::reply::json(&header))
+    Ok(warp::reply::json(&df.get_column_names()))
 }
 
 // Function to read a specific row from a CSV file and return it as JSON
@@ -34,24 +27,25 @@ async fn read_csv_row(csv_path: String, row_index: usize) -> Result<impl warp::R
         .finish()
         .unwrap();
 
+    // Check if the row_index is within the valid range of rows in the DataFrame
     if row_index < df.height() {
-        // If the requested row index exists, extract the row data and convert it to Strings
-        let row_data = df
-            .get_row(row_index)
-            .unwrap()
-            .0
-            .iter()
-            .map(|value| value.to_string())
-            .collect::<Vec<String>>();
+        // Get the data from the specified row
+        let row_data = df.get_row(row_index).unwrap().0;
 
-        // Serialize the row data and respond with it as JSON
-        let serialized_response = serde_json::to_string(&row_data).unwrap();
-        Ok(warp::reply::json(&serialized_response))
+        // Create a new vector to store the name-value
+        let mut name_val = Vec::new();
+        for (name, value) in zip(df.get_column_names().iter(), row_data.iter()) {
+            name_val.push(format!("{}: {}", name, value));
+        }
+
+        // Return the JSON response
+        Ok(warp::reply::json(&name_val))
     } else {
-        // If the requested row index does not exist, respond with an error message as JSON
+        // If the row_index is invalid, create an error message
         let error_response = format!("Row with index: {} not found", row_index);
-        let serialized_response = serde_json::to_string(&error_response).unwrap();
-        Ok(warp::reply::json(&serialized_response))
+
+        // Return the JSON response
+        Ok(warp::reply::json(&error_response))
     }
 }
 
@@ -159,17 +153,6 @@ async fn main() {
             args[1].clone()
         };
     }
-
-    // Read the CSV file and create a DataFrame
-    let df = CsvReader::from_path(&*CSV_PATH)
-        .unwrap()
-        .has_header(true)
-        .finish()
-        .unwrap();
-
-    // Print the DataFrame to the console
-    println!("DataFrame df from titanic.csv:");
-    println!("{:?}", df);
 
     // Define the health route that returns "OK" for health checks
     let health_route = warp::path("health").and(warp::get()).map(|| "OK");
