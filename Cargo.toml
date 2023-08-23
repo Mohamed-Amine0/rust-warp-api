@@ -1,0 +1,15 @@
+[package]
+name = "dataframe-recordbatch-deltatable-in-rust"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+arrow = "28"
+datafusion = "28.0.0"
+deltalake = { version = "0.6.0", features = ["azure", "arrow", "parquet", "datafusion-ext"] }
+parquet = "45.0.0"
+polars = { version = "0.32.1", features = ["polars-io"] }
+polars-io = { version = "0.32.1", features = ["parquet"] }
+tokio = "1.31.0"
