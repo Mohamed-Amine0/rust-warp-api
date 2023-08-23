@@ -1,3 +1,4 @@
+use arrow::array::Array;
 use arrow::datatypes::Schema;
 use arrow::{
     array::{ArrayRef, Float64Array, Int32Array, StringArray},
@@ -26,8 +27,6 @@ fn col_to_vec(column: &Series) -> Vec<String> {
 
     result
 }
-
-use arrow::array::Array;
 
 fn create_primitive_array(column: &Series) -> Arc<dyn Array> {
     match column.dtype() {
@@ -134,11 +133,7 @@ async fn main() {
     //     println!("\n\n\nThis is the field\n{:#?}", field.data_type().to_string());
     // }
 
-    let table = create_deltatable_from_recordbatch(
-        "./tmp-deltatable",
-        recordbatch,
-    )
-    .await;
+    let table = create_deltatable_from_recordbatch("./tmp-deltatable", recordbatch).await;
 
     //print the schema of the DeltaTable
     println!(
