@@ -1,5 +1,5 @@
 # dataframe-recordbatch-deltatable-in-rust
-dataframe-->recordbatch-->deltatable
+dataframe ──> recordbatch ──> deltatable
 
 # DataFrame, RecordBatch, and DeltaTable in Rust
 
