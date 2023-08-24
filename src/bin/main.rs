@@ -13,6 +13,23 @@ use polars::prelude::*;
 use polars::prelude::{DataFrame, Series};
 use std::sync::Arc;
 
+use polars::prelude::ParquetReader;
+use std::io::Result;
+use polars::prelude::SerReader;
+
+fn read_parquet_file(_path: &str) -> Result<DataFrame> {
+    let df = ParquetReader::new(
+        std::fs::File::open(
+            "./tmp-deltatable/part-00000-730f08c7-7089-4980-a962-2b4d8789aaa5-c000.snappy.parquet",
+        )
+        .unwrap(),
+    )
+    .finish()
+    .unwrap();
+
+    Ok(df)
+}
+
 fn col_to_vec(column: &Series) -> Vec<String> {
     let col_vec: Vec<String> = column
         .utf8()
@@ -154,6 +171,12 @@ async fn main() {
         "\n\n\nThis is the version of the DeltaTable\n{:#?}",
         table.version()
     );
+
+    let file_path = "./tmp-deltatable/part-00000-730f08c7-7089-4980-a962-2b4d8789aaa5-c000.snappy.parquet";
+    
+    let df1 = read_parquet_file(file_path).unwrap();
+
+    println!("{:?}", df1);
 
     // let appended_counties: DataFrame = df!("Rank (2021)" => &[105, 106, 107, 108, 109, 110, 111],
     //     "Apple Price (€/kg)" => &[0.75, 0.70, 0.70, 0.65, 0.52, 0.50, 0.45],
