@@ -2,6 +2,8 @@
 
 This is a REST API written in Rust using the warp framework for handling DataFrame manipulation operations. The API provides endpoints to perform various operations on Parquet files, such as deleting columns, renaming columns, adding data to columns, adding null columns, casting columns, adding columns with values, adding rows, deleting rows, updating rows, and updating the row counter.
 
+P.S: All of the methods support arguments for an input parquet file path and an output parquet file for future implementations but for now I kept all of the changes on a single parquet file for this implementation. 
+
 ## Getting Started
 
 Before you begin make sure you have Rust installed on your system.
