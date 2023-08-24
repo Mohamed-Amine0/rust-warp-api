@@ -202,39 +202,4 @@ async fn main() {
 
     // println!("Table version : {:#?}", table.version());
     // println!("Table files : {:#?}", table.get_files());
-
-    
-    //###############################################################################
-    // // New rows to be added
-    // let new_rows: DataFrame = df!(
-    //     "Rank (2021)" => &[110, 111],
-    //     "Apple Price (€/kg)" => &[0.60, 0.58],
-    //     "Country" => &["Greece", "Bulgaria"]
-    // )
-    // .unwrap();
-
-    // // Add the new rows to the existing DataFrame
-    // let updated_countries = countries.vstack(&new_rows);
-
-    // // Create a RecordBatch from the updated DataFrame
-    // let updated_recordbatch = generate_recordbatch_from_dataframe(&updated_countries).unwrap();
-
-    // // Append the RecordBatch to the DeltaTable
-    // let table = append_to_table(
-    //     "./tmp-deltatable".to_string(),
-    //     updated_recordbatch,
-    // )
-    // .await;
-
-    // println!(
-    //     "\n\n\nThis is the schema of the DeltaTable\n{:#?}",
-    //     table.get_schema()
-    // );
-
-    // println!(
-    //     "\n\n\nThis is the version of the DeltaTable\n{:#?}",
-    //     table.version()
-    // );
-
-    // // let table = deltalake::open_table("./tmp-deltatable").await.unwrap();
 }
