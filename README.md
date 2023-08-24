@@ -40,7 +40,7 @@ To run the Rust code provided in the repository:
 
 Please ensure you have Rust and the required dependencies installed before running the code.
 Make sure to install Cargo before attempting to build and run the Rust code.
-Visit this link [Link](https://doc.rust-lang.org/book/ch01-01-installation.html)
+Visit this [link](https://doc.rust-lang.org/book/ch01-01-installation.html)
 
 ## How the functions interact with each other
 
