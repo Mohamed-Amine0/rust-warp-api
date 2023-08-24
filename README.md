@@ -1,42 +1,136 @@
-# RUST_API
-## README
+# Rust REST API for DataFrame Manipulation
 
-This code provides a simple API for reading and parsing CSV files. The API is implemented using the Warp framework and the Polars library.
+This is a REST API written in Rust using the warp framework for handling DataFrame manipulation operations. The API provides endpoints to perform various operations on Parquet files, such as deleting columns, renaming columns, adding data to columns, adding null columns, casting columns, adding columns with values, adding rows, deleting rows, updating rows, and updating the row counter.
 
-The API has two routes:
+## Getting Started
 
-* `/health`: This route returns a simple "OK" message to indicate that the API is healthy.
-* `/api/header`: This route returns the header of the CSV file as JSON.
-* `/api/row/<row_index>`: This route returns the row with the specified index as JSON.
+Before you begin make sure you have Rust installed on your system.
 
-To run the API, simply run the following command:
+1. Clone the repository.
+2. Navigate to the project directory.
+3. Build and run the API using "cargo run --release <parquet_path>" (you can use ./data/test.parquet)
+   Replace `<parquet_path>` with the path to your input Parquet file.
+4. The API will be accessible at http://127.0.0.1:3030.
 
+## Directory Structure
+
+The code has been organized into separate directories to enhance modularity and maintainability:
+
+- `src/`: Contains the main application code.
+  - `handlers/`: Contains individual handler modules for different API endpoints.
+    - `column_handlers.rs`: contains handlers responsible for Dataframe columns' manipulations.
+    - `row_handlers.rs`: contains handlers responsible for Dataframe rows' manipulations.
+  - `models/`: Contains data models and structures.
+    - `mod.rs`: Contains definitions of the data models and structures.
+  - `main.rs`: The entry point of the application.
+  - `utils.rs`: Contains utility functions, macros, and traits used across the application.
+- `data/`: Contains sample data files (e.g., test.parquet).
+
+## API Endpoints
+
+The following endpoints are available:
+
+- GET /display-dataframe: Display the contents of the DataFrame.
+- DELETE /delete-column/{column_name}: Delete a column from the DataFrame.
+- PUT /rename-column/{old_column_name}: Rename a column in the DataFrame.
+- POST /add-data-to-column/{column_name}: Add data to a column in the DataFrame.
+  P.S: you need to format the data correctly to avoid errors, here's an example to help with that:
+  Adding data to a column of Strings:
+```json
+{
+"data": {
+"Utf8Owned": "new data"
+}
+}
 ```
-cargo run
+- POST /add-null-column/{column_name}/{column_type}: Add a null column of a specified type to the DataFrame.
+- PUT /cast-column/{column_name}/{new_type}: Cast a column to a new data type.
+- POST /add-column-with-values/{column_name}: Add a new column with specified values to the DataFrame.
+P.S: you need to format the data correctly to avoid errors, here's an example to help with that:
+This is a column of integers:
+```json
+[
+{
+"Int32": 898
+},
+{
+"Int32": 5464
+},
+{
+"Int32": 85694
+},
+{
+"Int32": 500
+}
+]
 ```
-
-The API will be available on localhost:3030.
-
-## Example
-
-To get the header of the CSV file, you can use the following request:
-
+- POST /add-row: Add a new row with specified values to the DataFrame.
+P.S: you need to format the data correctly to avoid errors, here's an example to help with that:
+This example should work on the provided parquet file in "./data/test.parquet"
+```json
+[
+{
+"Int32": 78
+},
+{
+"Int32": 65
+},
+{
+"Int32": 782
+},
+{
+"Utf8Owned": "Hermano"
+},
+{
+"Int32": 30
+},
+{
+"Utf8Owned": "example"
+}
+]
 ```
-curl -X GET http://localhost:3030/api/header
+- DELETE /delete-row/{row_index}: Delete a row from the DataFrame.
+- PUT /update-row/{row_index}: Update a row in the DataFrame.
+P.S: you need to format the data correctly to avoid errors, here's an example to help with that:
+This example should work on the provided parquet file in "./data/test.parquet"
+```json
+[
+{
+"Int32": 8585
+},
+{
+"Int32": 87456
+},
+{
+"Int32": 879
+},
+{
+"Utf8Owned": "test_data"
+},
+{
+"Int32": 785
+},
+{
+"Utf8Owned": "updated :D"
+}
+]
 ```
+- PUT /update-row-counter: Update the row counter in the DataFrame and add a visible column displaying the index.
 
-This will return a JSON response like the following:
+## Dependencies
 
- ["PassengerId", "Survived", "Pclass", "Name", "Sex", "Age", "SibSp", "Parch", "Ticket", "Fare", "Cabin", "Embarked"]
+The following Rust crates are used in this project:
 
+- `lazy_static` for lazy initialization of static variables. "cargo add lazy_static"
+- `polars` for DataFrame manipulation with features parquet and serde "cargo add polars --features serde,parquet"
+- `polars-core` for DataFrame manipulation functions. "cargo add polars-core"
+- `polars-io` for Parquet file reading and writing. "cargo add polars-io"
+- `serde` and `serde_json` for serialization and deserialization of JSON. "cargo add serde" and "cargo add serde_json"
+- `warp` for building the REST API. "cargo add warp"
+- `tokio` with the `full` feature for asynchronous programming. "cargo add tokio --features full"
 
-To get the row with the index 3, you can use the following request:
+## Notes
 
-```
-curl -X GET http://localhost:3030/api/row/3
-```
-
-This will return a response like the following:
-
-
-"[\"4\",\"1\",\"1\",\"\\\"Futrelle, Mrs. Jacques Heath (Lily May Peel)\\\"\",\"\\\"female\\\"\",\"35.0\",\"1\",\"0\",\"\\\"113803\\\"\",\"53.1\",\"\\\"C123\\\"\",\"\\\"S\\\"\"]"
+- This API uses asynchronous programming with the `tokio` runtime.
+- The API endpoints are defined using the `warp` framework.
+- DataFrame manipulation operations are performed using the polars-core crate.

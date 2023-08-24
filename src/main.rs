@@ -1,152 +1,185 @@
-use std::convert::Infallible;
-use warp::Filter;
+mod handlers {
+    pub mod column_handlers;
+    pub mod row_handlers;
+}
+mod models;
+mod utils;
+
+use crate::handlers::column_handlers::*;
+use crate::handlers::row_handlers::*;
+use crate::utils::*;
+use lazy_static::lazy_static;
+use models::AddDataRequestBody;
 use polars::prelude::*;
-
-// Define a function to read the header of the CSV file and return it as JSON
-async fn read_csv_header() -> Result<impl warp::Reply, Infallible> {
-    // Read the CSV file and create a DataFrame
-    let df = CsvReader::from_path("/home/amine/Documents/internship/projects/wb_api/src/titanic.csv")
-        .unwrap() //attempts to open and read the CSV file
-        .has_header(true) //specify that the CSV file has a header row. This means that the first row of the CSV file contains column names, and the reader should interpret it as such
-        .finish() //this method returns a Result containing either a DataFrame if successful or an error message if the CSV file cannot be parsed
-        .unwrap(); //unwrap the Result to get the DataFrame
-
-    // Extract the header names from DataFrame columns and collect them into a Vec of Strings
-    let header: Vec<String> = df.get_columns() //get the columns of the DataFrame
-                                .iter() //iterate over the columns
-                                .map(|c| c.name().to_string()) //get the name of each column and convert it to a String
-                                .collect(); //collect the Strings into a Vec
-
-    // Return the header as a JSON response
-    Ok(warp::reply::json(&header))
-}
-
-// Define a function to read a row of the CSV file based on the given row_index and return it as JSON
-async fn read_csv_row(row_index: usize) -> Result<impl warp::Reply, Infallible> {
-    // Read the CSV file and create a DataFrame
-    let df = CsvReader::from_path("/home/amine/Documents/internship/projects/wb_api/src/titanic.csv")
-        .unwrap() 
-        .has_header(true)
-        .finish()
-        .unwrap();
-
-    // Check if the row_index is within the valid range of rows in the DataFrame
-    if row_index < df.height() {
-        // Get the data from the specified row and convert it to a Vec of Strings
-        let row_data = df
-            .get_row(row_index) //get the row at the specified index
-            .unwrap() //unwrap the Result to get the Row
-            .0.iter() //iterate over the values in the Row
-            .map(|value| value.to_string()) //convert each value to a String
-            .collect::<Vec<String>>();
-
-        // Serialize the row_data into a JSON response
-        let serialized_response = serde_json::to_string(&row_data).unwrap();
-
-        // Return the JSON response
-        Ok(warp::reply::json(&serialized_response))
-    } else {
-        // If the row_index is invalid, create an error message
-        let error_response = format!("Row with index: {} not found", row_index);
-
-        // Serialize the error_response into a JSON response
-        let serialized_response = serde_json::to_string(&error_response).unwrap();
-
-        // Return the JSON response
-        Ok(warp::reply::json(&serialized_response))
-    }
-}
-
-// Define a function to get the type of a variable
-fn type_of<T>(_: T) -> String {
-    std::any::type_name::<T>().to_string()
-}
-
-
+use warp::Filter;
 
 #[tokio::main]
 async fn main() {
+    let args: Vec<String> = std::env::args().collect();
+    if args.len() < 2 {
+        eprintln!("MISSING PATH");
+        std::process::exit(1);
+    }
+    lazy_static! {
+        static ref PARQUET_PATH: String = {
+            let args: Vec<String> = std::env::args().collect();
+            if args.len() < 2 {
+                eprintln!("MISSING PATH");
+                std::process::exit(1);
+            }
+            args[1].clone()
+        };
+    }
 
+    let delete_column_route = warp::path!("delete-column" / String)
+        .and(warp::delete())
+        .and_then(|column_name: String| async move {
+            delete_column_handler(
+                PARQUET_PATH.to_string(),
+                PARQUET_PATH.to_string(),
+                column_name,
+            )
+            .await
+        });
 
-    let df = CsvReader::from_path("/home/amine/Documents/internship/projects/wb_api/src/titanic.csv")
-        .unwrap() 
-        .has_header(true)
-        .finish()
-        .unwrap();
+    let rename_column_route = warp::path!("rename-column" / String)
+        .and(warp::put())
+        .and(warp::body::json())
+        .and_then(
+            |old_column_name: String, new_column_data: Vec<String>| async move {
+                rename_column_handler(
+                    old_column_name,
+                    PARQUET_PATH.to_string(),
+                    PARQUET_PATH.to_string(),
+                    new_column_data,
+                )
+                .await
+            },
+        );
 
-        // Get the data from the specified row and convert it to a Vec of Strings
-        let row_data = df
-            .get_row(3) //get the row at the specified index
-            .unwrap() //unwrap the Result to get the Row
-            .0.iter() //iterate over the values in the Row
-            .map(|value| value.to_string()) //convert each value to a String
-            .collect::<Vec<String>>();
+    let add_data_to_column_route = warp::path!("add-data-to-column" / String)
+        .and(warp::post())
+        .and(warp::body::json())
+        .and_then(
+            |column_name: String, request_body: AddDataRequestBody| async move {
+                add_data_to_column_handler(
+                    PARQUET_PATH.to_string(),
+                    PARQUET_PATH.to_string(),
+                    column_name,
+                    request_body,
+                )
+                .await
+            },
+        );
 
-    // Print the result of the df.get_row(3).unwrap() method call
-    println!("\n\n\n\n\n\nTHIS IS THE RESULT OF df.get_row(3).unwrap() METHOD CALL:\n");
-    println!("{:?}", df.get_row(3).unwrap());  
-    // Print the type of the df.get_row(3).unwrap() method call
-    println!("\n\nTHIS IS THE TYPE OF df.get_row(3).unwrap() METHOD CALL:\n");
-    println!("{:?}", type_of(df.get_row(3).unwrap()));
+    let add_null_column_route = warp::path!("add-null-column" / String / String)
+        .and(warp::post())
+        .and_then(|column_name, column_type: String| async move {
+            add_null_column_handler(
+                PARQUET_PATH.to_string(),
+                PARQUET_PATH.to_string(),
+                column_name,
+                column_type,
+            )
+            .await
+        });
 
-    // Print the result of the df.get_row(3).unwrap().0 method call
-    println!("\n\n\n\n\n\nTHIS IS THE RESULT OF df.get_row(3).unwrap().0 METHOD CALL:\n");
-    println!("{:?}", df.get_row(3).unwrap().0);
-    // Print the type of the df.get_row(3).unwrap().0 method call
-    println!("\n\nTHIS IS THE TYPE OF df.get_row(3).unwrap().0 METHOD CALL:\n");
-    println!("{:?}", type_of(df.get_row(3).unwrap().0));
+    let cast_column_route = warp::path!("cast-column" / String / String)
+        .and(warp::put())
+        .and_then(|column_name, new_type: String| async move {
+            cast_column_handler(
+                PARQUET_PATH.to_string(),
+                PARQUET_PATH.to_string(),
+                column_name,
+                new_type,
+            )
+            .await
+        });
 
-    // Print the result of the df.get_rows(3).unwrap().0.iter() method call
-    println!("\n\n\n\n\n\nTHIS IS THE RESULT OF df.get_rows(3).unwrap().0.iter() METHOD CALL:\n");
-    println!("{:?}", df.get_row(3).unwrap().0.iter());
-    // Print the type of the df.get_rows(3).unwrap().0.iter() method call
-    println!("\n\nTHIS IS THE TYPE OF df.get_rows(3).unwrap().0.iter() METHOD CALL:\n");
-    println!("{:?}", type_of(df.get_row(3).unwrap().0.iter()));
+    let add_column_with_values_route = warp::path!("add-column-with-values" / String)
+        .and(warp::post())
+        .and(warp::body::json())
+        .and_then(
+            |column_name: String, column_data: Vec<crate::AnyValue<'static>>| {
+                let parquet_path = PARQUET_PATH.clone();
+                let output_path = PARQUET_PATH.clone();
+                async move {
+                    add_column_with_values_handler(
+                        parquet_path,
+                        output_path,
+                        column_name,
+                        column_data,
+                    )
+                    .await
+                }
+            },
+        );
 
-    // Print row_data
-    println!("\n\n\n\n\n\nTHIS IS THE ROW DATA:\n");
-    println!("{:?}", row_data);
-    // Print the type of row_data
-    println!("\n\nTHIS IS THE TYPE OF ROW DATA:\n");
-    println!("{:?}", type_of(row_data));
+    let add_row_route = warp::path!("add-row")
+        .and(warp::post())
+        .and(warp::body::json())
+        .and_then(|new_row_values: Vec<AnyValue<'static>>| {
+            let parquet_path = PARQUET_PATH.clone();
+            let output_path = PARQUET_PATH.clone();
+            async move { add_row_handler(parquet_path, output_path, new_row_values).await }
+        });
 
-    // Print the df
-    println!("\n\n\n\n\n\nTHIS IS THE DATAFRAME:\n");
-    println!("{:?}", df);
-    // Print the type of the df
-    println!("\n\nTHIS IS THE TYPE OF DATAFRAME:\n");
-    println!("{:?}", type_of(df));
+    let delete_row_route = warp::path!("delete-row" / u32)
+        .and(warp::delete())
+        .and_then(move |row_index: u32| {
+            delete_row_handler(
+                PARQUET_PATH.to_string(),
+                PARQUET_PATH.to_string(),
+                row_index,
+            )
+        });
 
-    
+    let update_row_route = warp::path!("update-row" / u32)
+        .and(warp::put())
+        .and(warp::body::json())
+        .and_then(
+            move |row_index: u32, new_row_values: Vec<AnyValue<'static>>| {
+                update_row_handler(
+                    PARQUET_PATH.to_string(),
+                    PARQUET_PATH.to_string(),
+                    row_index,
+                    new_row_values,
+                )
+            },
+        );
 
+    let update_row_counter_route =
+        warp::path!("update-row-counter")
+            .and(warp::put())
+            .and_then(move || {
+                update_row_counter_handler(PARQUET_PATH.to_string(), PARQUET_PATH.to_string())
+            });
 
-    // Print the result of the df.get_columns() method call
-    //println!("\n\n\n\n\n\nTHIS IS THE RESULT OF df.get_columns() METHOD CALL:\n\n");
-    //println!("{:?}", df.get_columns());
+    let display_dataframe_route =
+        warp::path!("display-dataframe")
+            .and(warp::get())
+            .and_then(|| async move {
+                let parquet_path = PARQUET_PATH.to_string();
+                match read_parquet(&parquet_path).await {
+                    Ok(df) => {
+                        let df_json = serde_json::to_value(&df).unwrap();
+                        Ok::<_, warp::Rejection>(warp::reply::json(&df_json))
+                    }
+                    Err(_) => Err(warp::reject::not_found()),
+                }
+            });
 
+    let routes = delete_column_route
+        .or(rename_column_route)
+        .or(add_data_to_column_route)
+        .or(add_null_column_route)
+        .or(cast_column_route)
+        .or(add_column_with_values_route)
+        .or(add_row_route)
+        .or(delete_row_route)
+        .or(update_row_route)
+        .or(update_row_counter_route)
+        .or(display_dataframe_route);
 
-    
-    // Define routes for the health check
-    let health_route = warp::path("health")
-        .and(warp::get())
-        .map(|| "OK");
-    
-
-    // Define routes for the API
-    let api_route_header = warp::path!("api" /"header")
-        .and(warp::get())
-        .and_then(read_csv_header);
-
-    let api_route_row = warp::path!("api" / "row" / usize)
-        .and(warp::get())
-        .and_then(read_csv_row);
-
-    // Combine the routes
-    let routes = health_route
-        .or(api_route_header)
-        .or(api_route_row);
-
-        
-    // Start the web server and run it on localhost:3030
     warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
 }
