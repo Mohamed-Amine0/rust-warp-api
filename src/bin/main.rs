@@ -91,12 +91,12 @@ async fn create_deltatable_from_recordbatch(path: &str, batch: RecordBatch) -> D
             arrow::datatypes::DataType::Int16 => "short",
             arrow::datatypes::DataType::Int8 => "byte",
             arrow::datatypes::DataType::Float32 => "float",
-            arrow::datatypes::DataType::Float64 => "double",// here it was float and it caused a panic error saying that the schema of the recordbatch and the schema of the table are not the same
+            arrow::datatypes::DataType::Float64 => "double", // here it was float and it caused a panic error saying that the schema of the recordbatch and the schema of the table are not the same
             arrow::datatypes::DataType::Boolean => "boolean",
             arrow::datatypes::DataType::Utf8 => "string",
             arrow::datatypes::DataType::Binary => "binary",
             arrow::datatypes::DataType::Date32 => "date",
-                _ => unimplemented!("Data type not supported"),
+            _ => unimplemented!("Data type not supported"),
         };
 
         builder = builder.with_column(
