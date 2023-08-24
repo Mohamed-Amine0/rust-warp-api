@@ -95,6 +95,17 @@ impl ToAnyValue for String {
         AnyValue::Utf8(self)
     }
 }
+//CSV support functions could replace parquet functions with no issues
+/*pub async fn read_csv(csv_path: &str) -> Result<DataFrame, PolarsError> {
+    let df = CsvReader::from_path(csv_path)?;
+    Ok(df.finish()?)
+}
+
+pub async fn write_csv(mut df: DataFrame, output_path: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let mut file = std::fs::File::create(output_path)?;
+    CsvWriter::new(&mut file).finish(&mut df)?;
+    Ok(())
+}*/
 
 pub async fn read_parquet(parquet_path: &str) -> Result<DataFrame, PolarsError> {
     let r = File::open(parquet_path)?;
