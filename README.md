@@ -1,66 +1,59 @@
-# rust-warp-api
-## README
+# dataframe-recordbatch-deltatable-in-rust
+dataframe-->recordbatch-->deltatable
 
-This code provides a simple API for reading and parsing CSV files. The API is implemented using the Warp framework and the Polars library.
+# DataFrame, RecordBatch, and DeltaTable in Rust
 
-The API has two routes:
+This repository contains Rust code demonstrating the use of DataFrame, RecordBatch, and DeltaTable for processing data. It includes examples of creating and manipulating data, generating RecordBatches from DataFrames, and DeltaTable from RecordBatches.
 
-* `/health`: This route returns a simple "OK" message to indicate that the API is healthy.
-* `/header`: This route returns the header of the CSV file as JSON.
-* `/row/<row_index>?file_path=<full path of your csv file>`: This route returns the row with the specified index as JSON.
 
-To run the API, simply run the following command:
 
-```
-cargo run
-```
+## Usage
 
-The API will be available on localhost:3030.
+To run the Rust code provided in the repository:
 
-## Example
+1. Clone the repository to your local machine:
 
-To get the header of the CSV file, you can use the following request or just use your browser:
+   ```bash
+   git clone https://github.com/sambaclab/dataframe-recordbatch-deltatable-in-rust.git
+   ```
 
-```
-curl -X GET http://localhost:3030/header?file_path=./src/titanic.csv
-```
+2. Navigate to the cloned directory:
 
-This will return a JSON response like the following:
+   ```bash
+   cd dataframe-recordbatch-deltatable-in-rust
+   ```
 
-```
-0	"PassengerId"
-1	"Survived"
-2	"Pclass"
-3	"Name"
-4	"Sex"
-5	"Age"
-6	"SibSp"
-7	"Parch"
-8	"Ticket"
-9	"Fare"
-10	"Cabin"
-11	"Embarked"
-```
+3. Run the Rust code:
 
-To get the row with the index 3, you can use the following request or just use your browser:
+   - To run the main Rust code:
 
-```
-curl -X GET http://localhost:3030/row/132?file_path=./src/titanic.csv
-```
+     ```bash
+     cargo run --bin main
+     ```
 
-This will return a response like the following:
+   - To run the Parquet content printing code:
+
+     ```bash
+     cargo run --bin print-parquet-content
+     ```
+   - remember to change the path of the parquet file of your choice
+
+Please ensure you have Rust and the required dependencies installed before running the code.
+Make sure to install Cargo before attempting to build and run the Rust code.
+Visit this [link](https://doc.rust-lang.org/book/ch01-01-installation.html)
+
+## How the functions interact with each other
 
 ```
-0	"PassengerId: 133"
-1	"Survived: 0"
-2	"Pclass: 3"
-3	'Name: "Robins, Mrs. Alexander A (Grace Charity Laury)"'
-4	'Sex: "female"'
-5	"Age: 47.0"
-6	"SibSp: 1"
-7	"Parch: 0"
-8	'Ticket: "A/5. 3337"'
-9	"Fare: 14.5"
-10	"Cabin: null"
-11	'Embarked: "S"'
+├── DataFrame ──> [generate_recordbatch_from_dataframe] ──> RecordBatch
+│   └── DataFrame ──> [generate_schema_from_dataframe] ──> Schema
+│       ├── Series ──> [create_primitive_array] ──> Arc<dyn Array>
+│       │   ├── Series ──> [col_to_vec] ──> Vec<String>
+
+
+
+├── RecordBatch ──> [create_deltatable_from_recordbatch] ──> DeltaTable
 ```
+## Dependencies
+
+The examples in this repository depend on various Rust libraries, including Polars, Arrow, Parquet and DeltaLake.
