@@ -1,5 +1,5 @@
 [package]
-name = "parquet-api-test"
+name = "rust-warp-api"
 version = "0.1.0"
 edition = "2021"
 
