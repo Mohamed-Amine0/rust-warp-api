@@ -36,7 +36,8 @@ To run the Rust code provided in the repository:
      ```bash
      cargo run --bin print-parquet-content
      ```
-
+   - remember to change the path of the parquet file of your choice
+   
 Please ensure you have Rust and the required dependencies installed before running the code.
 Make sure to install Cargo before attempting to build and run the Rust code.
 Visit this link ```https://doc.rust-lang.org/book/ch01-01-installation.html```
@@ -44,14 +45,14 @@ Visit this link ```https://doc.rust-lang.org/book/ch01-01-installation.html```
 ## How the functions interact with each other
 
 ```
-├── DataFrame --> [generate_recordbatch_from_dataframe] --> RecordBatch
-│   └── DataFrame --> [generate_schema_from_dataframe] --> Schema
-│       ├── Series --> [create_primitive_array] --> Arc<dyn Array>
-│       │   ├── Series --> [col_to_vec] --> Vec<String>
+├── DataFrame ──> [generate_recordbatch_from_dataframe] ──> RecordBatch
+│   └── DataFrame ──> [generate_schema_from_dataframe] ──> Schema
+│       ├── Series ──> [create_primitive_array] ──> Arc<dyn Array>
+│       │   ├── Series ──> [col_to_vec] ──> Vec<String>
 
 
 
-├── RecordBatch --> [create_deltatable_from_recordbatch] --> DeltaTable
+├── RecordBatch ──> [create_deltatable_from_recordbatch] ──> DeltaTable
 ```
 ## Dependencies
 
