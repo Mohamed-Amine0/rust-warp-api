@@ -22,7 +22,6 @@ fn read_csv(csv_path: &str) -> Result<DataFrame> {
     Ok(df.finish().unwrap())
 }
 
-
 fn read_parquet_file(_path: &str) -> Result<DataFrame> {
     let df = ParquetReader::new(
         std::fs::File::open(
