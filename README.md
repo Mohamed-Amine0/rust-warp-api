@@ -2,9 +2,9 @@
 
 This is a REST API written in Rust using the warp framework for handling DataFrame manipulation operations. The API provides endpoints to perform various operations on Parquet files, such as deleting columns, renaming columns, adding data to columns, adding null columns, casting columns, adding columns with values, adding rows, deleting rows, updating rows, and updating the row counter.
 
-P.S 1: All of the methods support arguments for an input parquet file path and an output parquet file for future implementations but for now I kept all of the changes on a single parquet file for this implementation. 
+P.S 1: All of the methods support arguments for an input parquet file path and an output parquet file for future implementations but for now all of the changes are made on a single parquet file for the input and output. 
 
-P.S 2: I added some comments for reading and writing into csv files as well as checking if the extension is .csv (could be useful for combining csv and parquet files manipulations)
+P.S 2: Some lines of code are marked as comments including the ones responsible for reading and writing into csv files as well as checking if the extension is .csv when introducing the environment variable (could be useful for combining csv and parquet files manipulations since the code can support both).
 
 ## Getting Started
 
@@ -137,4 +137,4 @@ The following Rust crates are used in this project:
 
 - This API uses asynchronous programming with the `tokio` runtime.
 - The API endpoints are defined using the `warp` framework.
-- DataFrame manipulation operations are performed using the polars-core crate.
+- DataFrame manipulation operations are performed using the polars crate.
