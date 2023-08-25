@@ -25,18 +25,20 @@ To run the Rust code provided in the repository:
 
 3. Run the Rust code:
 
-   - To run the main Rust code:
+   - To run the api Rust code (cloned from test/polars branch):
 
      ```bash
-     cargo run --bin main
+     cargo run --bin api
      ```
 
-   - To run the Parquet content printing code:
+   - To run the dataframe-to-delta code that contains the new functions:
 
      ```bash
-     cargo run --bin print-parquet-content
+     cargo run --bin dataframe-to-delta
      ```
-   - remember to change the path of the parquet file of your choice
+   - - remember to delete the delta table from the tmp-delta folder if you want to run the code to create a new delta table or change the path of the delta table of your choice if you use the function create_deltatable_from_recordbatch()  
+   - - remember to change the path of the parquet file of your choice if you use the function read_parquet_file() 
+
 
 Please ensure you have Rust and the required dependencies installed before running the code.
 Make sure to install Cargo before attempting to build and run the Rust code.
