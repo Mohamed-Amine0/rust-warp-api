@@ -36,8 +36,8 @@ To run the Rust code provided in the repository:
      ```bash
      cargo run --bin dataframe-to-delta
      ```
-   - - remember to delete the delta table from the tmp-delta folder if you want to run the code to create a new delta table or change the path of the delta table of your choice if you use the function create_deltatable_from_recordbatch()  
-   - - remember to change the path of the parquet file of your choice if you use the function read_parquet_file() 
+        - remember to delete the delta table from the tmp-delta folder if you want to run the code to create a new delta table or change the path of the delta table of your choice if you use the function create_deltatable_from_recordbatch()  
+        - remember to change the path of the parquet file of your choice if you use the function read_parquet_file() 
 
 
 Please ensure you have Rust and the required dependencies installed before running the code.

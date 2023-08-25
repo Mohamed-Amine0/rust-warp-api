@@ -17,6 +17,12 @@ use polars::prelude::ParquetReader;
 use polars::prelude::SerReader;
 use std::io::Result;
 
+fn read_csv(csv_path: &str) -> Result<DataFrame> {
+    let df = CsvReader::from_path(csv_path).unwrap();
+    Ok(df.finish().unwrap())
+}
+
+
 fn read_parquet_file(_path: &str) -> Result<DataFrame> {
     let df = ParquetReader::new(
         std::fs::File::open(
