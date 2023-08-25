@@ -44,6 +44,12 @@ Please ensure you have Rust and the required dependencies installed before runni
 Make sure to install Cargo before attempting to build and run the Rust code.
 Visit this [link](https://doc.rust-lang.org/book/ch01-01-installation.html)
 
+## API Program (api.rs)
+
+If you're interested in learning more about the `api.rs` program, you can find detailed information in the README of the `test/polars` branch. This branch contains specific details and documentation related to the API program implementation.
+
+Feel free to check it out [here](https://github.com/sambaclab/rust-warp-api/tree/test/polars).
+
 ## How the functions interact with each other
 
 ```
