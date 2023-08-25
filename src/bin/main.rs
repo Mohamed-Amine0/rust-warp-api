@@ -14,8 +14,8 @@ use polars::prelude::{DataFrame, Series};
 use std::sync::Arc;
 
 use polars::prelude::ParquetReader;
-use std::io::Result;
 use polars::prelude::SerReader;
+use std::io::Result;
 
 fn read_parquet_file(_path: &str) -> Result<DataFrame> {
     let df = ParquetReader::new(
@@ -172,8 +172,9 @@ async fn main() {
         table.version()
     );
 
-    let file_path = "./tmp-deltatable/part-00000-730f08c7-7089-4980-a962-2b4d8789aaa5-c000.snappy.parquet";
-    
+    let file_path =
+        "./tmp-deltatable/part-00000-730f08c7-7089-4980-a962-2b4d8789aaa5-c000.snappy.parquet";
+
     let df1 = read_parquet_file(file_path).unwrap();
 
     println!("{:?}", df1);
