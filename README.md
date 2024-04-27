@@ -40,3 +40,11 @@ This will return a response like the following:
 
 
 "[\"4\",\"1\",\"1\",\"\\\"Futrelle, Mrs. Jacques Heath (Lily May Peel)\\\"\",\"\\\"female\\\"\",\"35.0\",\"1\",\"0\",\"\\\"113803\\\"\",\"53.1\",\"\\\"C123\\\"\",\"\\\"S\\\"\"]"
+
+## Important Branches
+
+- **test/polars branch**: In this branch, you'll find an enhanced version of my main codebase. I use this branch for testing new features and improvements before merging them into the main code. It also provides a better display of data, enhancing user experience.
+
+- **dataframe/recordbatch/deltatable branch**: Here, you'll discover a refined version of my code where the API seamlessly handles dataframes, record batches, and delta tables. I've implemented functionalities to parse between these data structures efficiently.
+
+Feel free to explore these branches to see the latest developments and improvements in my project.
